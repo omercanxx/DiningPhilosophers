@@ -13,16 +13,17 @@ int probabilityDouble;
 struct linked_list
 {
     int number;
+    int count;
     struct linked_list *next;
 };
+
+typedef struct linked_list node;
+node *head = NULL, *last = NULL;
 
 typedef struct{
     bool isDouble;
     pthread_mutex_t chop;
 }foo;
-
-typedef struct linked_list node;
-node *head=NULL, *last=NULL;
 
 
 void *philosopher(void *);
@@ -35,6 +36,7 @@ void putDown(int);
 void insert(int value);
 void delete_item(int value);
 bool search_item(int value);
+void increase(int id);
 
 foo *chopsticks;
 pthread_t *philosophers;
@@ -73,7 +75,6 @@ int main(int argc, const char *argv[]) {
 	for (i = 0; i < philosophersNumber; ++i) {
  
 		pthread_create(&philosophers[i], &attributes[i], philosopher, &i);
-		
 	}
 
 	for (i = 0; i < philosophersNumber; ++i) {
@@ -86,10 +87,11 @@ void *philosopher(void *arg) {
 	int philosopherId = pthread_self();
 	insert(philosopherId);
 	while (1) {
-		if(search_item(philosopherId) ==false)
+		// Yiyen bir daha yiyemesin diye kontrol yapılabilir.
+		/*if(search_item(philosopherId) ==false)
 		{
 			break;
-		}
+		}*/
 		pickUp(philosopherId);
 		eat(philosopherId);
 		putDown(philosopherId);
@@ -135,7 +137,7 @@ void eat(int philosopherNumber) {
 	printf("Philosopher %d will eat for %d seconds\n", philosopherNumber, eatTime);
 	sleep(eatTime);
 	printf("Philosopher %d ate\n", philosopherNumber);
-
+	increase(philosopherNumber);
 }
 
 void putDown(int philosopherNumber) {
@@ -149,7 +151,8 @@ void putDown(int philosopherNumber) {
 	{
 		pthread_mutex_unlock(&chopsticks[(philosopherNumber + philosophersNumber) % philosophersNumber].chop);
 	}
-	delete_item(philosopherNumber);
+	// Yemek yemiş filozofun kontrolü yapılması için yedikten sonra linked list üzerinden delete işlemi yapılabilir.
+	/delete_item(philosopherNumber);/
 //	print_linked_list();
 	
 }
@@ -162,6 +165,7 @@ void insert(int value)
     temp_node = (node *) malloc(sizeof(node));
 
     temp_node->number=value;
+    temp_node->count = 0;
     temp_node->next=NULL;
 
     //For the 1st element
@@ -175,7 +179,6 @@ void insert(int value)
         last->next=temp_node;
         last=temp_node;
     }
-
 }
 
 void delete_item(int value)
@@ -221,7 +224,29 @@ bool search_item(int value)
     }
     return true;
 }
+void increase(int value)
+{
+    node *searchNode = head;
+    int flag = 0;
 
+    while(searchNode!=NULL)
+    {
+        if(searchNode->number==value)
+        {
+	    searchNode->count++;
+	    printf("%d ate %d times\n" ,searchNode->number ,searchNode->count);
+            flag = 1;
+            break;
+        }
+        else
+            searchNode = searchNode->next;
+    }
+
+    if(flag==0)
+    {
+	printf("ERROR INCREASE");
+    }
+}
 
 /*void print_linked_list()
 {
